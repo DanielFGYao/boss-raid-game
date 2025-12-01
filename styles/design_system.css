@@ -1,0 +1,239 @@
+:root {
+    /* Colors */
+    --color-bg-deep: #0A0A0A;
+    --color-bg-surface: #141414;
+    --color-bg-overlay: rgba(10, 10, 10, 0.85);
+
+    --color-primary-red: #D93030;
+    --color-primary-red-dark: #8f1f1f;
+    --color-accent-gold: #C8A050;
+    --color-tech-blue: #405070;
+
+    --color-text-white: #FFFFFF;
+    --color-text-grey: #B0B0B0;
+
+    /* Fonts */
+    --font-header: 'Oswald', 'Rajdhani', sans-serif;
+    --font-body: 'Noto Sans TC', 'Inter', sans-serif;
+    --font-data: 'Bebas Neue', 'Chakra Petch', monospace;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+/* Reset & Base */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    /* Game-like feel */
+}
+
+body {
+    background-color: var(--color-bg-deep);
+    color: var(--color-text-white);
+    font-family: var(--font-body);
+    overflow: hidden;
+    /* Prevent scrolling for app-like feel */
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Mobile Container Simulation */
+#app-container {
+    width: 100%;
+    height: 100%;
+    max-width: 450px;
+    /* Mobile width cap */
+    max-height: 900px;
+    position: relative;
+    background: url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80&w=1000&auto=format&fit=crop') center/cover no-repeat;
+    /* Placeholder Boss BG */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+#app-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(5, 5, 5, 0.2) 0%, rgba(5, 5, 5, 0.8) 60%, var(--color-bg-deep) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Utilities */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.chamfered {
+    clip-path: polygon(10px 0, 100% 0,
+            100% calc(100% - 10px), calc(100% - 10px) 100%,
+            0 100%, 0 10px);
+}
+
+.chamfered-right {
+    clip-path: polygon(0 0, 100% 0,
+            100% calc(100% - 15px), calc(100% - 15px) 100%,
+            0 100%);
+}
+
+.text-gold {
+    color: var(--color-accent-gold);
+}
+
+.text-red {
+    color: var(--color-primary-red);
+}
+
+.font-header {
+    font-family: var(--font-header);
+    text-transform: uppercase;
+}
+
+.font-data {
+    font-family: var(--font-data);
+}
+
+/* Components */
+.btn-primary {
+    background: linear-gradient(90deg, var(--color-primary-red), var(--color-primary-red-dark));
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    font-family: var(--font-header);
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+    /* Slight round for pill shape base */
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(230, 57, 57, 0.4);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+    filter: brightness(0.9);
+}
+
+.footer-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-header);
+    font-weight: 700;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.nav-deco {
+    flex-grow: 1;
+    height: 4px;
+    margin: 0 20px;
+    background-image: radial-gradient(var(--color-primary-red) 20%, transparent 20%);
+    background-size: 4px 4px;
+    opacity: 0.5;
+}
+
+/* Animations */
+@keyframes flash {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes glitch {
+    0% {
+        transform: translate(0);
+    }
+
+    20% {
+        transform: translate(-2px, 2px);
+    }
+
+    40% {
+        transform: translate(-2px, -2px);
+    }
+
+    60% {
+        transform: translate(2px, 2px);
+    }
+
+    80% {
+        transform: translate(2px, -2px);
+    }
+
+    100% {
+        transform: translate(0);
+    }
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(217, 48, 48, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(217, 48, 48, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(217, 48, 48, 0);
+    }
+}
+
+.anim-flash {
+    animation: flash 1s infinite;
+}
+
+.anim-glitch {
+    animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+.anim-pulse {
+    animation: pulse-red 2s infinite;
+}

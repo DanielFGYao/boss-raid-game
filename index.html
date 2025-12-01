@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss 討伐戰</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@400;700&family=Oswald:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles/design_system.css">
+    <style>
+        .central-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .bottom-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
+            padding: 20px 20px 80px 20px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.02);
+            }
+        }
+
+        .score-item {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app-container">
+        <!-- Main Screen (Lobby) -->
+        <div id="main-screen" class="screen" style="background: url('assets/boss_bg.png') center/cover;">
+
+            <!-- Top Left Box -->
+            <div class="chamfered"
+                style="position: absolute; top: 15px; left: 15px; background: rgba(10, 10, 10, 0.85); padding: 12px 15px; border: 1px solid #D93030; border-left: 3px solid #D93030; max-width: 220px; backdrop-filter: blur(4px);">
+                <div class="font-header text-red" style="font-size: 1.3rem; line-height: 1; letter-spacing: 1px;">RAID
+                    MISSION</div>
+                <div class="font-data text-grey" style="font-size: 0.7rem; margin-top: 3px; opacity: 0.8;">SEASON 04 //
+                    ENDS 06D 12H</div>
+                <div class="font-header" style="font-size: 1rem; margin-top: 8px; color: #fff;">和牛漢堡排</div>
+
+                <div class="chamfered"
+                    style="position: absolute; top: 8px; right: 8px; border: 1px solid #C8A050; background: rgba(200, 160, 80, 0.1); padding: 3px 6px; cursor: pointer; font-size: 0.65rem; color: #C8A050; line-height: 1.2;"
+                    onclick="alert('玩法說明')">
+                    玩法<br>說明
+                </div>
+            </div>
+
+            <!-- Top Right Ticket Info -->
+            <div class="chamfered"
+                style="position: absolute; top: 15px; right: 15px; background: rgba(10, 10, 10, 0.85); padding: 8px 15px; border: 1px solid #444; border-right: 3px solid #C8A050; backdrop-filter: blur(4px);">
+                <span class="font-data" style="font-size: 0.75rem; color: #999;">票券 持有/上限</span>
+                <span id="ticket-count" class="font-header text-gold"
+                    style="font-weight: bold; margin-left: 8px; font-size: 1.1rem;">3</span><span class="text-grey"
+                    style="font-size: 0.9rem;">/3</span>
+            </div>
+
+            <!-- Left Side Score Box -->
+            <div class="chamfered"
+                style="position: absolute; top: 120px; left: 15px; border: 1px solid #C8A050; border-left: 3px solid #C8A050; background: rgba(10, 10, 10, 0.85); padding: 12px; min-width: 90px; backdrop-filter: blur(4px); cursor: pointer;"
+                onclick="openLeaderboard()">
+                <div class="font-header text-gold" style="font-size: 0.8rem; opacity: 0.9; letter-spacing: 0.5px;">
+                    累積<br>總分</div>
+                <div class="font-data text-gold"
+                    style="font-size: 1.3rem; margin-top: 5px; text-shadow: 0 0 8px rgba(200,160,80,0.3);">12.4M</div>
+                <div style="height: 1px; background: rgba(200,160,80,0.3); margin: 8px 0;"></div>
+                <div class="font-header text-gold" style="font-size: 0.8rem; opacity: 0.9; letter-spacing: 0.5px;">排名
+                </div>
+                <div class="font-data" style="font-size: 1.3rem; margin-top: 3px; color: #fff;">#42</div>
+            </div>
+
+            <!-- Center Boss Visual -->
+            <div class="central-area">
+                <div class="font-header" style="font-size: 3rem; text-shadow: 0 0 10px rgba(0,0,0,0.5);">Boss主視覺</div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="bottom-controls" style="padding-bottom: 80px;">
+
+                <!-- Boss Info Bar -->
+                <div class="chamfered"
+                    style="display: flex; align-items: center; gap: 10px; background: rgba(10, 10, 10, 0.85); border: 1px solid rgba(217, 48, 48, 0.6); border-top: 2px solid #D93030; padding: 8px 15px; backdrop-filter: blur(4px); margin-bottom: 12px;">
+
+                    <!-- Boss Attributes -->
+                    <div
+                        style="display: flex; gap: 6px; border-right: 1px solid rgba(217, 48, 48, 0.3); padding-right: 10px;">
+                        <div class="chamfered"
+                            style="width: 28px; height: 28px; background: rgba(217, 48, 48, 0.2); border: 1px solid rgba(217, 48, 48, 0.6); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"
+                            title="物理抗性">🛡️</div>
+                        <div class="chamfered"
+                            style="width: 28px; height: 28px; background: rgba(217, 48, 48, 0.2); border: 1px solid rgba(217, 48, 48, 0.6); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"
+                            title="防禦力UP">⚔️</div>
+                    </div>
+
+                    <!-- Skills List -->
+                    <div style="display: flex; gap: 6px; flex: 1;">
+                        <div class="chamfered"
+                            style="background: rgba(217, 48, 48, 0.15); border: 1px solid rgba(217, 48, 48, 0.5); padding: 4px 8px; color: #fff; font-size: 0.75rem; white-space: nowrap;">
+                            技能A</div>
+                        <div class="chamfered"
+                            style="background: rgba(217, 48, 48, 0.15); border: 1px solid rgba(217, 48, 48, 0.5); padding: 4px 8px; color: #fff; font-size: 0.75rem; white-space: nowrap;">
+                            技能B</div>
+                        <div class="chamfered"
+                            style="background: rgba(217, 48, 48, 0.15); border: 1px solid rgba(217, 48, 48, 0.5); padding: 4px 8px; color: #fff; font-size: 0.75rem; white-space: nowrap;">
+                            技能C</div>
+                    </div>
+
+                    <!-- Detail Info Button -->
+                    <div class="chamfered"
+                        style="background: rgba(200, 160, 80, 0.2); border: 1px solid rgba(200, 160, 80, 0.6); padding: 5px 10px; cursor: pointer; color: #C8A050; font-size: 0.7rem; backdrop-filter: blur(3px); font-weight: bold; white-space: nowrap;"
+                        onclick="openBossDetail()">
+                        INFO ►
+                    </div>
+                </div>
+
+                <!-- Difficulty Carousel -->
+                <div
+                    style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px; width: 100%;">
+                    <div style="font-size: 1.5rem; color: #C8A050; cursor: pointer; padding: 0 10px; text-shadow: 0 0 8px rgba(200,160,80,0.5);"
+                        onclick="prevDifficulty()">◄</div>
+
+                    <div class="chamfered"
+                        style="background: rgba(10, 10, 10, 0.85); border: 1px solid rgba(200, 160, 80, 0.6); border-top: 2px solid #C8A050; padding: 10px 20px; text-align: center; min-width: 240px; max-width: 260px; backdrop-filter: blur(4px); position: relative; min-height: 140px;">
+
+                        <!-- Locked Overlay -->
+                        <div id="diff-locked-overlay"
+                            style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(2px); z-index: 10; border: 2px solid #666; justify-content: center; align-items: center;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.8rem; margin-bottom: 4px;">🔒</div>
+                                <div class="font-header text-grey" style="font-size: 1rem;">難度鎖定中</div>
+                                <div class="font-data" style="font-size: 0.65rem; margin-top: 4px; color: #999;">
+                                    需先通關前一難度</div>
+                            </div>
+                        </div>
+
+                        <!-- Difficulty Name & Recommended Power -->
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div class="font-data" style="font-size: 0.65rem; color: #999;">難度</div>
+                            <div class="font-data text-gold" style="font-size: 0.7rem;">推薦 <span id="carousel-rec-power"
+                                    style="font-weight: bold;">10,000</span></div>
+                        </div>
+
+                        <div id="carousel-diff-name" class="font-header"
+                            style="font-size: 1.3rem; color: #fff; margin-bottom: 8px;">NORMAL</div>
+
+                        <!-- Personal Best Score -->
+                        <div id="carousel-best-score"
+                            style="margin-bottom: 8px; padding: 5px 0; border-top: 1px solid rgba(200,160,80,0.3); border-bottom: 1px solid rgba(200,160,80,0.3); min-height: 40px; display: flex; flex-direction: column; justify-content: center;">
+                            <div class="font-data text-grey" style="font-size: 0.6rem; margin-bottom: 2px;">個人最高分</div>
+                            <div id="carousel-best-score-value" class="font-header text-gold"
+                                style="font-size: 1.1rem; text-shadow: 0 0 8px rgba(200,160,80,0.4);">1,234,567</div>
+                        </div>
+
+                        <!-- Completion Rewards -->
+                        <div style="margin-top: 6px;">
+                            <div class="font-data text-grey"
+                                style="font-size: 0.6rem; margin-bottom: 3px; opacity: 0.8;">通關獎勵</div>
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <div id="carousel-reward-1" class="chamfered"
+                                    style="background: rgba(200,160,80,0.15); border: 1px solid rgba(200,160,80,0.4); padding: 3px 8px; font-size: 0.7rem; color: #C8A050;">
+                                    金幣 x500</div>
+                                <div id="carousel-reward-2" class="chamfered"
+                                    style="background: rgba(200,160,80,0.15); border: 1px solid rgba(200,160,80,0.4); padding: 3px 8px; font-size: 0.7rem; color: #C8A050;">
+                                    經驗 x200</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 1.5rem; color: #C8A050; cursor: pointer; padding: 0 10px; text-shadow: 0 0 8px rgba(200,160,80,0.5);"
+                        onclick="nextDifficulty()">►</div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; justify-content: center; gap: 12px; padding: 0 15px;">
+                    <button id="btn-sweep" class="chamfered btn-primary"
+                        style="flex: 1; height: 55px; background: linear-gradient(to bottom, rgba(100, 100, 100, 0.3), rgba(60, 60, 60, 0.3)); border: 1px solid #666; color: #aaa; font-size: 1.2rem; font-weight: bold; backdrop-filter: blur(3px);"
+                        onclick="handleSweepAction()">
+                        掃蕩
+                    </button>
+                    <button id="btn-simulate" class="chamfered btn-primary"
+                        style="flex: 1; height: 55px; background: linear-gradient(to bottom, rgba(100, 120, 100, 0.3), rgba(60, 80, 60, 0.3)); border: 1px solid #6a8; color: #8fa; font-size: 1.2rem; font-weight: bold; backdrop-filter: blur(3px);"
+                        onclick="alert('模擬戰鬥功能開發中')">
+                        模擬
+                    </button>
+                    <button id="btn-enter" class="chamfered btn-primary"
+                        style="flex: 1; height: 55px; background: linear-gradient(to bottom, rgba(217, 48, 48, 0.4), rgba(150, 30, 30, 0.4)); border: 1px solid #D93030; border-bottom: 2px solid #D93030; color: #fff; font-size: 1.2rem; font-weight: bold; backdrop-filter: blur(3px); text-shadow: 0 0 8px rgba(217,48,48,0.5);"
+                        onclick="openTeamFormation()">
+                        進入
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boss Detail Modal (With Attributes and Difficulty Selector) -->
+        <div id="boss-detail-modal" class="screen"
+            style="background: rgba(0,0,0,0.95); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; flex-direction: column; padding: 0;">
+
+            <!-- Visual Area (Top) -->
+            <div style="flex: 1; position: relative; background: url('assets/boss_bg.png') center/cover;">
+                <!-- Top Left: Boss Name + Attributes Tags -->
+                <div style="position: absolute; top: 20px; left: 20px;">
+                    <div class="font-header text-gold" style="font-size: 3rem; line-height: 1;">BOSS</div>
+                    <div class="font-header" style="font-size: 2rem; margin-bottom: 10px;">和牛漢堡排</div>
+
+                    <!-- Boss Attributes Tags -->
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <div class="chamfered"
+                            style="background: rgba(217, 48, 48, 0.2); border: 1px solid rgba(217, 48, 48, 0.6); padding: 4px 10px; display: flex; align-items: center; gap: 5px;">
+                            <span style="font-size: 1rem;">🛡️</span>
+                            <span class="font-data" style="font-size: 0.75rem; color: #ff9999;">物理抗性</span>
+                        </div>
+                        <div class="chamfered"
+                            style="background: rgba(217, 48, 48, 0.2); border: 1px solid rgba(217, 48, 48, 0.6); padding: 4px 10px; display: flex; align-items: center; gap: 5px;">
+                            <span style="font-size: 1rem;">⚔️</span>
+                            <span class="font-data" style="font-size: 0.75rem; color: #ff9999;">防禦力UP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Right: Difficulty Selector with Arrows -->
+                <div style="position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 10px;">
+                    <!-- Left Arrow -->
+                    <div onclick="modalPrevDifficulty()"
+                        style="cursor: pointer; font-size: 1.5rem; color: #C8A050; text-shadow: 0 0 8px rgba(200,160,80,0.5); padding: 5px; user-select: none;">
+                        ◄
+                    </div>
+
+                    <!-- Difficulty Display -->
+                    <div class="chamfered"
+                        style="background: rgba(0,0,0,0.7); padding: 8px 20px; border: 2px solid #C8A050; border-top: 3px solid #C8A050; min-width: 120px; text-align: center; backdrop-filter: blur(4px);">
+                        <div class="font-data text-grey" style="font-size: 0.65rem; margin-bottom: 3px;">DIFFICULTY
+                        </div>
+                        <div id="modal-diff-display" class="font-header text-gold"
+                            style="font-size: 1.3rem; letter-spacing: 1px;">NORMAL</div>
+                    </div>
+
+                    <!-- Right Arrow -->
+                    <div onclick="modalNextDifficulty()"
+                        style="cursor: pointer; font-size: 1.5rem; color: #C8A050; text-shadow: 0 0 8px rgba(200,160,80,0.5); padding: 5px; user-select: none;">
+                        ►
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel (Bottom) -->
+            <div
+                style="background: #141414; padding: 20px; border-top: 2px solid var(--color-accent-gold); display: flex; flex-direction: column; gap: 20px;">
+
+                <!-- Skill Icons Row -->
+                <div id="modal-skill-icons"
+                    style="display: flex; gap: 15px; padding-bottom: 10px; border-bottom: 1px solid #333;">
+                    <div class="skill-icon selected"
+                        style="width: 60px; height: 60px; background: #333; border: 2px solid var(--color-accent-gold); position: relative;">
+                        <div
+                            style="position: absolute; bottom: 0; right: 0; background: #000; font-size: 0.7rem; padding: 0 4px;">
+                            Lv.5</div>
+                    </div>
+                    <div class="skill-icon"
+                        style="width: 60px; height: 60px; background: #222; border: 1px solid #444; position: relative;">
+                        <div
+                            style="position: absolute; bottom: 0; right: 0; background: #000; font-size: 0.7rem; padding: 0 4px;">
+                            Lv.3</div>
+                    </div>
+                </div>
+
+                <!-- Skill Info -->
+                <div id="modal-skill-info" style="flex: 1;">
+                    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+                        <span id="modal-skill-level" class="font-header text-grey"
+                            style="font-size: 1.5rem;">Lv.5</span>
+                        <span id="modal-skill-name" class="font-header" style="font-size: 1.8rem;">肋眼4次方</span>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <span id="modal-skill-tag-type" class="tag chamfered text-red"
+                            style="background: #3a0d0d;">奧義</span>
+                        <span id="modal-skill-tag-cd" class="tag chamfered">冷卻 8.7s</span>
+                        <span id="modal-skill-tag-range" class="tag chamfered">距離 6.9m</span>
+                    </div>
+
+                    <p id="modal-skill-desc" class="font-body text-grey" style="line-height: 1.6; min-height: 80px;">
+                        對前方造成3次寬度10、長度50的直線傷害 (<span class="text-gold">100/100/150</span>)，並造成5秒鐘的50%緩速效果。然後回復自身血量 (200)
+                        並獲得5秒鐘 20% 的攻速提升。
+                    </p>
+
+                    <div class="font-body text-grey" style="font-size: 0.8rem; margin-top: 20px; opacity: 0.5;">
+                        預留五行的可能性，質變註解也可以寫這邊喔。
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 10px;"
+                        onclick="closeBossDetail()">
+                        <span style="font-size: 1.2rem;">◄</span> <span class="font-header text-red">BACK</span>
+                    </div>
+
+                    <div class="chamfered"
+                        style="background: var(--color-accent-gold); padding: 15px 50px; color: #000; font-weight: bold; cursor: pointer; min-width: 180px; text-align: center; font-size: 1rem;"
+                        onclick="closeBossDetail()">
+                        關閉 (CLOSE)
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 10px;"
+                        onclick="closeBossDetail()">
+                        <span class="font-header text-red">HOME</span> <span style="font-size: 1.2rem;">⌂</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Formation Screen -->
+        <div id="team-screen" class="screen"
+            style="background: #0a0a0a; transform: translateX(100%); transition: transform 0.3s; z-index: 30; display: flex; flex-direction: column; padding: 20px;">
+            <div class="header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div class="raid-subtitle">出擊隊伍</div>
+                    <div class="font-header" style="font-size: 2rem;">隊伍戰力</div>
+                </div>
+                <div class="font-data text-gold" style="font-size: 1.5rem;">123,456</div>
+            </div>
+
+            <div class="team-slots" style="margin-top: 40px; display: flex; gap: 10px; overflow-x: auto;">
+                <!-- Slot 1 -->
+                <div class="slot-group" style="display: flex; flex-direction: column; gap: 5px; min-width: 80px;">
+                    <div class="main-slot chamfered"
+                        style="height: 120px; background: #222; border: 1px solid #444; position: relative;">
+                        <div class="font-data" style="position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem;">主將
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                    </div>
+                </div>
+                <!-- Slot 2 -->
+                <div class="slot-group" style="display: flex; flex-direction: column; gap: 5px; min-width: 80px;">
+                    <div class="main-slot chamfered"
+                        style="height: 120px; background: #222; border: 1px solid #444; position: relative;">
+                        <div class="font-data" style="position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem;">主將
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                    </div>
+                </div>
+                <!-- Slot 3 -->
+                <div class="slot-group" style="display: flex; flex-direction: column; gap: 5px; min-width: 80px;">
+                    <div class="main-slot chamfered"
+                        style="height: 120px; background: #222; border: 1px solid #444; position: relative;">
+                        <div class="font-data" style="position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem;">主將
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                    </div>
+                </div>
+                <!-- Slot 4 -->
+                <div class="slot-group" style="display: flex; flex-direction: column; gap: 5px; min-width: 80px;">
+                    <div class="main-slot chamfered"
+                        style="height: 120px; background: #222; border: 1px solid #444; position: relative;">
+                        <div class="font-data" style="position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem;">主將
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                        <div class="sub-slot"
+                            style="width: 38px; height: 38px; background: #1a1a1a; border: 1px solid #333;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: auto; margin-bottom: 80px; display: flex; gap: 10px;">
+                <button class="btn-primary"
+                    style="flex: 1; background: transparent; border: 1px solid #444; font-size: 1rem;">自動</button>
+                <button class="btn-primary" style="flex: 2;" onclick="startBattle()">戰鬥開始</button>
+            </div>
+        </div>
+
+        <!-- Battle Screen -->
+        <div id="battle-screen" class="screen"
+            style="background: #000; transform: translateY(100%); transition: transform 0.5s; z-index: 50;">
+            <div
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/boss_bg.png') center/cover; opacity: 0.5;">
+            </div>
+
+            <div
+                style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="font-header text-red" style="font-size: 1.2rem;">BOSS 血量</div>
+                    <div id="battle-timer" class="font-data" style="font-size: 1.5rem;">03:00</div>
+                </div>
+                <div style="width: 100%; height: 20px; background: #333; border: 1px solid #555; position: relative;">
+                    <div id="boss-hp-bar"
+                        style="width: 100%; height: 100%; background: var(--color-primary-red); transition: width 0.2s;">
+                    </div>
+                    <div id="boss-hp-text" class="font-data"
+                        style="position: absolute; top: 0; left: 5px; font-size: 0.8rem; line-height: 18px;">100%</div>
+                </div>
+            </div>
+
+            <div style="position: absolute; right: 20px; top: 150px; text-align: right;">
+                <div class="font-header text-gold" style="font-size: 1rem;">總傷害</div>
+                <div id="damage-accumulator" class="font-data"
+                    style="font-size: 2.5rem; text-shadow: 0 0 10px rgba(200, 160, 80, 0.5);">0</div>
+                <div id="damage-percent" class="font-data text-grey" style="font-size: 1.2rem;">0.00%</div>
+            </div>
+
+            <div style="position: absolute; bottom: 40px; width: 100%; text-align: center;">
+                <div class="font-header" style="margin-bottom: 10px; animation: flash 1s infinite;">自動戰鬥進行中...</div>
+                <button class="btn-primary"
+                    style="background: #333; border: 1px solid #555; font-size: 0.9rem; padding: 8px 20px;"
+                    onclick="endBattleSimulation()">放棄任務</button>
+            </div>
+        </div>
+
+        <!-- Result Screen (Compact, Full-page) - Z-INDEX 110 -->
+        <div id="result-screen" class="screen"
+            style="background: #000 url('assets/result_bg.png') center/cover; transform: scale(0.9); opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 110;">
+
+            <!-- Top Left: Event + Boss Name -->
+            <div style="position: absolute; top: 20px; left: 20px; z-index: 5;">
+                <div class="font-data text-grey" style="font-size: 0.7rem; opacity: 0.8;">SEASON 04 // RAID MISSION
+                </div>
+                <div class="font-header" style="font-size: 1.2rem; color: #fff; margin-top: 5px;">和牛漢堡排</div>
+            </div>
+
+            <!-- Center Upper: Dynamic Title -->
+            <div
+                style="position: absolute; top: 20%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; width: 100%;">
+                <h1 id="result-title" class="font-header text-gold"
+                    style="font-size: 3.5rem; margin-bottom: 10px; letter-spacing: 3px; text-shadow: 0 0 20px rgba(200, 160, 80, 0.8);">
+                    行動結束</h1>
+                <div id="result-subtitle" class="font-data"
+                    style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9); letter-spacing: 2px;">OPERATION COMPLETE
+                </div>
+                <div id="boss-defeated-extra" style="display: none; margin-top: 15px;">
+                    <div class="font-header text-gold" style="font-size: 1.1rem;">★ 下一難度已解鎖 ★</div>
+                </div>
+            </div>
+
+            <!-- Bottom: Compact Score Calculation Flow + Rewards -->
+            <div
+                style="position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 10; display: flex; flex-direction: column; gap: 10px;">
+
+                <!-- Score Calculation Block (Compact) -->
+                <div class="chamfered"
+                    style="background: rgba(10, 10, 10, 0.85); border: 2px solid rgba(200, 160, 80, 0.6); border-top: 3px solid var(--color-accent-gold); padding: 15px; backdrop-filter: blur(8px);">
+
+                    <!-- Top Row: 2-column layout -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <div class="score-item"
+                            style="flex: 1; display: flex; flex-direction: column; padding: 6px; background: rgba(0,0,0,0.3); border-left: 3px solid #666;">
+                            <span class="font-data"
+                                style="font-size: 0.65rem; color: #999; margin-bottom: 2px;">造成傷害%</span>
+                            <span id="result-damage-percent" class="font-header text-gold"
+                                style="font-size: 1.2rem;">0.00%</span>
+                        </div>
+
+                        <div class="score-item"
+                            style="flex: 1; display: flex; flex-direction: column; padding: 6px; background: rgba(0,0,0,0.3); border-left: 3px solid #666;">
+                            <span class="font-data"
+                                style="font-size: 0.65rem; color: #999; margin-bottom: 2px;">難度倍率</span>
+                            <span id="result-multiplier" class="font-header" style="font-size: 1.2rem; color: #8fa;">x
+                                1.0</span>
+                        </div>
+                    </div>
+
+                    <!-- Raid Score -->
+                    <div class="score-item"
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(217, 48, 48, 0.15); border: 2px solid rgba(217, 48, 48, 0.5); border-left: 4px solid var(--color-primary-red); margin-bottom: 6px;">
+                        <span class="font-header" style="font-size: 0.85rem; color: #fff;">討伐得分</span>
+                        <span id="result-raid-score" class="font-header text-red"
+                            style="font-size: 1.6rem; text-shadow: 0 0 15px rgba(230, 57, 57, 0.6);">0</span>
+                    </div>
+
+                    <!-- New Record Indicator -->
+                    <div id="new-record-indicator"
+                        style="display: none; text-align: center; padding: 5px; background: rgba(200, 160, 80, 0.25); border: 2px solid rgba(200, 160, 80, 0.6); margin-bottom: 6px; animation: pulse 1s infinite;">
+                        <span class="font-header text-gold" style="font-size: 0.7rem; letter-spacing: 1px;">★ 最高紀錄 NEW
+                            RECORD ★</span>
+                    </div>
+
+                    <div
+                        style="height: 2px; background: linear-gradient(to right, transparent, var(--color-accent-gold), transparent); margin: 6px 0;">
+                    </div>
+
+                    <!-- Total Accumulated Score -->
+                    <div class="score-item" style="text-align: center; padding: 10px 8px; margin-bottom: 6px;">
+                        <div class="font-data text-grey"
+                            style="font-size: 0.6rem; margin-bottom: 4px; opacity: 0.8; letter-spacing: 1px;">活動累積總分
+                        </div>
+                        <div id="result-total-score" class="font-data text-gold"
+                            style="font-size: 2.8rem; text-shadow: 0 0 25px rgba(200, 160, 80, 0.7); line-height: 1; font-weight: bold;">
+                            0</div>
+                    </div>
+
+                    <!-- Rank Change -->
+                    <div class="score-item" style="text-align: center; padding: 6px;">
+                        <div class="font-data text-grey" style="font-size: 0.6rem; margin-bottom: 2px;">本次排名</div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span id="result-rank" class="font-header text-gold" style="font-size: 1.6rem;">#42</span>
+                            <span id="rank-change" style="display: none; font-size: 0.85rem;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rewards Display -->
+                <div class="chamfered"
+                    style="background: rgba(10, 10, 10, 0.75); border: 1px solid rgba(200, 160, 80, 0.4); padding: 10px; backdrop-filter: blur(4px);">
+                    <div class="font-data text-gold"
+                        style="font-size: 0.7rem; margin-bottom: 6px; text-align: center; opacity: 0.9;">此次獲得獎勵</div>
+                    <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                        <div class="chamfered"
+                            style="background: rgba(200,160,80,0.15); border: 1px solid rgba(200,160,80,0.4); padding: 5px 10px; font-size: 0.75rem; color: #C8A050;">
+                            金幣 x500</div>
+                        <div class="chamfered"
+                            style="background: rgba(200,160,80,0.15); border: 1px solid rgba(200,160,80,0.4); padding: 5px 10px; font-size: 0.75rem; color: #C8A050;">
+                            經驗 x200</div>
+                        <div class="chamfered"
+                            style="background: rgba(200,160,80,0.15); border: 1px solid rgba(200,160,80,0.4); padding: 5px 10px; font-size: 0.75rem; color: #C8A050;">
+                            素材 x3</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Center: Confirm Button -->
+            <div
+                style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 120; width: 90%; max-width: 300px;">
+                <button class="chamfered btn-primary" onclick="closeResult()"
+                    style="width: 100%; height: 50px; font-size: 1.15rem; background: linear-gradient(to bottom, rgba(217, 48, 48, 0.5), rgba(150, 30, 30, 0.5)); border: 2px solid #D93030; color: #fff; font-weight: bold; backdrop-filter: blur(5px); text-shadow: 0 0 10px rgba(217,48,48,0.8); cursor: pointer;">
+                    確認
+                </button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Panel -->
+        <div id="leaderboard-panel" class="screen"
+            style="background: #111; transform: translateX(100%); transition: transform 0.3s; z-index: 40;">
+            <div class="header">
+                <div class="raid-subtitle">全球排名</div>
+                <div class="font-header" style="font-size: 2rem;">排行榜</div>
+            </div>
+
+            <div
+                style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; height: 60%; overflow-y: auto;">
+                <div class="chamfered-right"
+                    style="background: #222; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--color-accent-gold);">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div class="font-header text-gold" style="font-size: 1.5rem; width: 30px;">01</div>
+                        <div>
+                            <div class="font-header">玩家_ONE</div>
+                            <div class="font-data text-grey">LV. 85</div>
+                        </div>
+                    </div>
+                    <div class="font-data text-gold" style="font-size: 1.2rem;">99,999,999</div>
+                </div>
+                <div class="chamfered-right"
+                    style="background: #1a1a1a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ccc;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div class="font-header text-grey" style="font-size: 1.5rem; width: 30px;">02</div>
+                        <div>
+                            <div class="font-header">玩家_TWO</div>
+                            <div class="font-data text-grey">LV. 82</div>
+                        </div>
+                    </div>
+                    <div class="font-data" style="font-size: 1.2rem;">88,500,000</div>
+                </div>
+                <div class="chamfered-right"
+                    style="background: #1a1a1a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #cd7f32;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div class="font-header text-grey" style="font-size: 1.5rem; width: 30px;">03</div>
+                        <div>
+                            <div class="font-header">玩家_THREE</div>
+                            <div class="font-data text-grey">LV. 79</div>
+                        </div>
+                    </div>
+                    <div class="font-data" style="font-size: 1.2rem;">75,200,000</div>
+                </div>
+            </div>
+
+            <div style="margin-top: auto; margin-bottom: 80px;">
+                <button class="btn-primary" style="width: 100%; background: transparent; border: 1px solid #444;"
+                    onclick="closeLeaderboard()">關閉</button>
+            </div>
+        </div>
+
+        <!-- Footer Nav -->
+        <div class="footer-nav">
+            <div class="nav-item" onclick="goBack()">
+                <span>◄</span> <span>返回</span>
+            </div>
+            <div class="nav-deco"></div>
+            <div class="nav-item" onclick="goHome()">
+                <span>主頁</span> <span>⌂</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/game_logic.js"></script>
+</body>
+
+</html>
