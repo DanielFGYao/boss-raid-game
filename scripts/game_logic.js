@@ -523,14 +523,166 @@ function sweep(diffKey) {
     }
 }
 
+
 function closeResult() {
     const resultScreen = document.getElementById('result-screen');
     resultScreen.style.opacity = '0';
     resultScreen.style.transform = 'scale(0.9)';
     resultScreen.style.pointerEvents = 'none';
+
+    // Also close team formation screen to return to main screen
+    const teamScreen = document.getElementById('team-screen');
+    if (teamScreen) {
+        teamScreen.style.transform = 'translateX(100%)';
+    }
+
+    // Check if tickets are depleted
+    if (GAME_STATE.tickets <= 0) {
+        showEventEndedLobby();
+    }
+}
+
+// Leaderboard Data
+const LEADERBOARD_DATA = [
+    { rank: 1, name: '玩家_ONE', level: 85, score: 99999999, avatar: 'assets/avatar_placeholder.png', team: [1, 1, 1, 1] },
+    { rank: 2, name: '玩家_TWO', level: 82, score: 88500000, avatar: 'assets/avatar_placeholder.png', team: [2, 2, 1, 1] },
+    { rank: 3, name: '玩家_THREE', level: 79, score: 75200000, avatar: 'assets/avatar_placeholder.png', team: [3, 2, 2, 1] },
+    { rank: 4, name: '玩家_FOUR', level: 80, score: 65000000, avatar: 'assets/avatar_placeholder.png', team: [1, 2, 3, 1] },
+    { rank: 5, name: '玩家_FIVE', level: 78, score: 58000000, avatar: 'assets/avatar_placeholder.png', team: [2, 1, 1, 3] },
+    { rank: 6, name: '玩家_SIX', level: 76, score: 50000000, avatar: 'assets/avatar_placeholder.png', team: [3, 3, 2, 2] },
+    { rank: 7, name: '玩家_SEVEN', level: 75, score: 45000000, avatar: 'assets/avatar_placeholder.png', team: [1, 1, 2, 2] },
+    { rank: 8, name: '玩家_EIGHT', level: 77, score: 40000000, avatar: 'assets/avatar_placeholder.png', team: [2, 2, 3, 3] },
+    { rank: 9, name: '玩家_NINE', level: 74, score: 35000000, avatar: 'assets/avatar_placeholder.png', team: [3, 1, 1, 1] },
+    { rank: 10, name: '玩家_TEN', level: 73, score: 30000000, avatar: 'assets/avatar_placeholder.png', team: [1, 2, 2, 1] },
+    { rank: 11, name: '玩家_ELEVEN', level: 72, score: 28000000, avatar: 'assets/avatar_placeholder.png', team: [2, 3, 1, 2] },
+    { rank: 12, name: '玩家_TWELVE', level: 71, score: 26000000, avatar: 'assets/avatar_placeholder.png', team: [3, 1, 3, 3] },
+    { rank: 13, name: '玩家_THIRTEEN', level: 70, score: 24000000, avatar: 'assets/avatar_placeholder.png', team: [1, 2, 1, 1] },
+    { rank: 14, name: '玩家_FOURTEEN', level: 69, score: 22000000, avatar: 'assets/avatar_placeholder.png', team: [2, 3, 2, 2] },
+    { rank: 15, name: '玩家_FIFTEEN', level: 68, score: 20000000, avatar: 'assets/avatar_placeholder.png', team: [3, 1, 3, 1] },
+    { rank: 16, name: '玩家_SIXTEEN', level: 67, score: 18000000, avatar: 'assets/avatar_placeholder.png', team: [1, 2, 1, 2] },
+    { rank: 17, name: '玩家_SEVENTEEN', level: 66, score: 16000000, avatar: 'assets/avatar_placeholder.png', team: [2, 3, 2, 3] },
+    { rank: 18, name: '玩家_EIGHTEEN', level: 65, score: 15000000, avatar: 'assets/avatar_placeholder.png', team: [3, 1, 3, 2] },
+    { rank: 19, name: '玩家_NINETEEN', level: 64, score: 14000000, avatar: 'assets/avatar_placeholder.png', team: [1, 2, 1, 3] },
+    { rank: 20, name: '玩家_TWENTY', level: 63, score: 13000000, avatar: 'assets/avatar_placeholder.png', team: [2, 3, 2, 1] },
+    { rank: 42, name: 'Daniel', level: 85, score: 12450999, avatar: 'assets/avatar_placeholder.png', isMe: true, team: [1, 1, 1, 1] },
+];
+
+// Reward Data
+const RANK_REWARDS = [
+    { rank: '1', rewards: ['鑽石 x5000', '傳說裝備箱 x1', '專屬稱號'] },
+    { rank: '2-3', rewards: ['鑽石 x3000', '史詩裝備箱 x1'] },
+    { rank: '4-10', rewards: ['鑽石 x1500', '稀有裝備箱 x1'] },
+    { rank: '11-50', rewards: ['鑽石 x800', '金幣 x100,000'] },
+    { rank: '51-100', rewards: ['鑽石 x500', '金幣 x50,000'] },
+    { rank: '101+', rewards: ['金幣 x20,000'] }
+];
+
+const SCORE_REWARDS = [
+    { score: 100000, rewards: ['金幣 x10,000'], claimed: true },
+    { score: 500000, rewards: ['鑽石 x100'], claimed: true },
+    { score: 1000000, rewards: ['高級召喚券 x1'], claimed: true },
+    { score: 5000000, rewards: ['史詩強化石 x5'], claimed: false },
+    { score: 10000000, rewards: ['傳說裝備碎片 x10'], claimed: false },
+    { score: 50000000, rewards: ['專屬頭像框'], claimed: false }
+];
+
+// Render Leaderboard
+function renderLeaderboard() {
+    const listContainer = document.getElementById('leaderboard-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    LEADERBOARD_DATA.forEach(player => {
+        const item = document.createElement('div');
+        item.className = 'rank-item chamfered-right';
+
+        // Special styles for top 3
+        if (player.rank === 1) item.classList.add('rank-1');
+        if (player.rank === 2) item.classList.add('rank-2');
+        if (player.rank === 3) item.classList.add('rank-3');
+        if (player.isMe) item.classList.add('is-me');
+
+        item.innerHTML = `
+            <div class="rank-badge font-header" style="font-size: 1.5rem; font-weight: bold; min-width: 40px; text-align: center;">${String(player.rank).padStart(2, '0')}</div>
+            <div class="avatar-container" style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 2px solid #444; background: #333;">
+                <img src="${player.avatar}" alt="${player.name}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div class="player-info" style="flex: 1;">
+                <div class="player-name font-header" style="font-size: 1rem; color: #fff;">${player.name}</div>
+                <div class="player-level font-data text-grey" style="font-size: 0.8rem;">LV. ${player.level}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="player-score font-data text-gold" style="font-size: 1.2rem;">${player.score.toLocaleString()}</div>
+                <div class="btn-inspect chamfered" onclick="openTeamDetail(${player.rank})">
+                    <span>🔍</span>
+                </div>
+            </div>
+        `;
+
+        // Item styles
+        item.style.cssText += `
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-left: 4px solid transparent;
+        `;
+
+        // Rank-specific coloring
+        if (player.rank === 1) {
+            item.style.background = '#2a2416';
+            item.style.borderLeftColor = 'var(--color-accent-gold)';
+            item.querySelector('.rank-badge').style.color = 'var(--color-accent-gold)';
+        } else if (player.rank === 2) {
+            item.style.background = '#1f1f21';
+            item.style.borderLeftColor = '#ccc';
+            item.querySelector('.rank-badge').style.color = '#ccc';
+        } else if (player.rank === 3) {
+            item.style.background = '#241e1a';
+            item.style.borderLeftColor = '#cd7f32';
+            item.querySelector('.rank-badge').style.color = '#cd7f32';
+        } else {
+            item.querySelector('.rank-badge').style.color = '#999';
+        }
+
+        // Highlight player's own rank
+        if (player.isMe) {
+            item.style.background = 'rgba(200, 160, 80, 0.15)';
+            item.style.border = '2px solid var(--color-accent-gold)';
+            item.style.borderLeft = '4px solid var(--color-accent-gold)';
+        }
+
+        listContainer.appendChild(item);
+    });
+
+    updatePlayerRankFixed();
+}
+
+// Update fixed player rank info at bottom
+function updatePlayerRankFixed() {
+    const myData = LEADERBOARD_DATA.find(p => p.isMe);
+    if (!myData) return;
+
+    const fixedArea = document.querySelector('.player-rank-fixed');
+    if (!fixedArea) return;
+
+    const rankBadge = fixedArea.querySelector('.rank-badge');
+    const playerName = fixedArea.querySelector('.player-name');
+    const playerLevel = fixedArea.querySelector('.player-level');
+    const playerScore = fixedArea.querySelector('.player-score');
+    const avatarImg = fixedArea.querySelector('.avatar-container img');
+
+    if (rankBadge) rankBadge.textContent = String(myData.rank).padStart(2, '0');
+    if (playerName) playerName.textContent = myData.name;
+    if (playerLevel) playerLevel.textContent = `LV. ${myData.level}`;
+    if (playerScore) playerScore.textContent = myData.score.toLocaleString();
+    if (avatarImg) avatarImg.src = myData.avatar;
 }
 
 function openLeaderboard() {
+    renderLeaderboard();
     document.getElementById('leaderboard-panel').style.transform = 'translateX(0)';
 }
 
@@ -559,6 +711,199 @@ function goHome() {
     document.getElementById('team-screen').style.transform = 'translateX(100%)';
     closeLeaderboard();
     closeResult();
+    closeTeamDetail();
+    closeRewardModal();
+}
+
+// --- New Features Logic ---
+
+// Team Detail
+function openTeamDetail(rank) {
+    const player = LEADERBOARD_DATA.find(p => p.rank === rank);
+    if (!player) return;
+
+    const modal = document.getElementById('team-detail-modal');
+    const nameEl = document.getElementById('team-detail-player-name');
+    const slotsContainer = document.querySelector('.team-slots-readonly');
+
+    nameEl.textContent = player.name;
+    modal.style.opacity = '1';
+    modal.style.pointerEvents = 'all';
+
+    // Generate Team Slots (Mock)
+    slotsContainer.innerHTML = '';
+    const teamConfig = player.team || [1, 1, 1, 1]; // Default mock
+
+    teamConfig.forEach(type => {
+        const group = document.createElement('div');
+        group.className = 'slot-group';
+        group.innerHTML = `
+            <div class="main-slot chamfered"></div>
+            <div style="display: flex; gap: 5px;">
+                <div class="sub-slot"></div>
+                <div class="sub-slot"></div>
+            </div>
+        `;
+        slotsContainer.appendChild(group);
+    });
+}
+
+function closeTeamDetail() {
+    const modal = document.getElementById('team-detail-modal');
+    modal.style.opacity = '0';
+    modal.style.pointerEvents = 'none';
+}
+
+// Reward Modal
+function openRewardModal() {
+    const modal = document.getElementById('reward-modal');
+    modal.style.opacity = '1';
+    modal.style.pointerEvents = 'all';
+    switchRewardTab('rank'); // Default to rank
+}
+
+function closeRewardModal() {
+    const modal = document.getElementById('reward-modal');
+    modal.style.opacity = '0';
+    modal.style.pointerEvents = 'none';
+}
+
+function switchRewardTab(tab) {
+    const rankTab = document.getElementById('tab-rank-reward');
+    const scoreTab = document.getElementById('tab-score-reward');
+    const rankList = document.getElementById('rank-reward-list');
+    const scoreList = document.getElementById('score-reward-list');
+
+    if (tab === 'rank') {
+        rankTab.classList.add('active');
+        scoreTab.classList.remove('active');
+        rankList.style.display = 'flex';
+        scoreList.style.display = 'none';
+        renderRankRewards();
+    } else {
+        rankTab.classList.remove('active');
+        scoreTab.classList.add('active');
+        rankList.style.display = 'none';
+        scoreList.style.display = 'flex';
+        renderScoreRewards();
+    }
+}
+
+function renderRankRewards() {
+    const container = document.getElementById('rank-reward-list');
+    container.innerHTML = '';
+
+    RANK_REWARDS.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'reward-item chamfered';
+
+        let rewardsHtml = item.rewards.map(r => `<div class="reward-pill chamfered">${r}</div>`).join('');
+
+        el.innerHTML = `
+            <div class="reward-rank-badge font-header">${item.rank}</div>
+            <div class="reward-content">
+                ${rewardsHtml}
+            </div>
+        `;
+        container.appendChild(el);
+    });
+}
+
+function renderScoreRewards() {
+    const container = document.getElementById('score-reward-list');
+    container.innerHTML = '';
+
+    SCORE_REWARDS.forEach(item => {
+        const el = document.createElement('div');
+        el.className = `reward-item chamfered ${item.claimed ? 'claimed' : ''}`;
+
+        let rewardsHtml = item.rewards.map(r => `<div class="reward-pill chamfered">${r}</div>`).join('');
+        let btnHtml = item.claimed
+            ? `<div class="font-data text-grey" style="font-size: 0.8rem;">已領取</div>`
+            : `<div class="font-data text-gold" style="font-size: 0.8rem;">未達成</div>`;
+
+        // If score reached but not claimed (mock logic: if score < personalBest)
+        if (!item.claimed && GAME_STATE.personalBest >= item.score) {
+            btnHtml = `<div class="font-data text-gold" style="font-size: 0.8rem;">可領取</div>`;
+        }
+
+        el.innerHTML = `
+            <div class="score-milestone">${item.score.toLocaleString()}</div>
+            <div class="reward-content">
+                ${rewardsHtml}
+            </div>
+            ${btnHtml}
+        `;
+        container.appendChild(el);
+    });
+}
+
+function claimAllRewards() {
+    alert('已領取所有可獲得獎勵！');
+}
+
+// Event Ended Lobby Logic
+function showEventEndedLobby() {
+    // Hide main screen content
+    const mainScreen = document.getElementById('main-screen');
+    if (mainScreen) mainScreen.style.display = 'none';
+
+    // Show event ended lobby
+    const lobby = document.getElementById('event-ended-lobby');
+    if (!lobby) return;
+
+    lobby.style.display = 'block';
+
+    // Update data
+    const totalScoreEl = document.getElementById('final-total-score');
+    const rankEl = document.getElementById('final-rank');
+    const rankTierEl = document.getElementById('final-rank-tier');
+
+    // Use personal best score
+    if (totalScoreEl) {
+        // Animate score count up
+        animateValue(totalScoreEl, 0, GAME_STATE.personalBest, 1500);
+    }
+
+    // Use mock rank or calculate (here we use a fixed mock rank for demo)
+    const mockRank = 2572;
+    if (rankEl) rankEl.textContent = mockRank.toLocaleString();
+
+    if (rankTierEl) {
+        rankTierEl.textContent = "2501-3000 名";
+    }
+
+    // Fade in
+    setTimeout(() => {
+        lobby.style.opacity = '1';
+    }, 50);
+}
+
+function hideEventEndedLobby() {
+    const lobby = document.getElementById('event-ended-lobby');
+    if (lobby) {
+        lobby.style.opacity = '0';
+        setTimeout(() => {
+            lobby.style.display = 'none';
+            // Show main screen again
+            const mainScreen = document.getElementById('main-screen');
+            if (mainScreen) mainScreen.style.display = 'block';
+        }, 300);
+    }
+}
+
+// Helper for score animation
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
 }
 
 // Expose functions to global scope for HTML onclick
@@ -580,3 +925,21 @@ window.closeBossDetail = closeBossDetail;
 window.handleSweepAction = handleSweepAction;
 window.modalPrevDifficulty = modalPrevDifficulty;
 window.modalNextDifficulty = modalNextDifficulty;
+window.openTeamDetail = openTeamDetail;
+window.closeTeamDetail = closeTeamDetail;
+window.openRewardModal = openRewardModal;
+window.closeRewardModal = closeRewardModal;
+window.switchRewardTab = switchRewardTab;
+window.claimAllRewards = claimAllRewards;
+window.showEventEndedLobby = showEventEndedLobby;
+window.hideEventEndedLobby = hideEventEndedLobby;
+
+// Placeholder function for closeTeamRecord (if team-record-modal exists)
+function closeTeamRecord() {
+    const modal = document.getElementById('team-record-modal');
+    if (modal) {
+        modal.style.opacity = '0';
+        modal.style.pointerEvents = 'none';
+    }
+}
+window.closeTeamRecord = closeTeamRecord;
